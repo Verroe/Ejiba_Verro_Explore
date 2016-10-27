@@ -30,14 +30,15 @@ func_sum <- function(dataframe){
 func_rsquare <- function(dataframe){
   # b) A dataframe that contains each pair of column names in the first column and the associated
   #r-square value in the second column. 
-  D.lm <- lm() #build this model
-  return(lapply(dataframe[,sapply(dataframe, is.numeric)], summary(D.lm)$r.squared))
+  data.lm <- lm(formula,dataframe) #build a linear model where the formula will be enter and the specified data frame
+  return(lapply(dataframe[,sapply(dataframe, is.numeric)], summary(data.lm)$r.squared))
   
 }
 
+#Need to add take coefficients whose absolute value is greater than the correlation threshold
 correlation <- function(dataframe){
-    #This function accept any dataframe as a parameter and returns a dataframe that contains each pair of column names in the first column in a single string separated by a -, 
-    #and their corresponding Pearson correlation coefficient in the second column.
+    #c) A dataframe that contains each pair of columns in the first column and correlation coefficient (Pearson) for all coefficient
+    #threshold in the second column a function that calculates correlation coefficients
     #Parameters: A dataframe
     #Returns: A dataframe with pair of column names and its correlation using pearson method
     
@@ -58,5 +59,5 @@ correlation <- function(dataframe){
     
     return(corr_mtx)
 }
-# c) A dataframe that contains each pair of columns in the first column and correlation coefficient (Pearson) for all coefficient
-#threshold in the second column a function that calculates correlation coefficients
+
+#I am still working on number 3 
