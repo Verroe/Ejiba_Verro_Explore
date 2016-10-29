@@ -3,8 +3,14 @@
 #Group C
 
 #Main function
-explore <- function(a, plot_switch, cor, vec) {
+explore <- function(dataframe, plot_switch = 'O', threshold, bins = NULL) {
+ 
+  tab <- func_table(dataframe) #prints the frequency table of the dataframe
+  summ <- func_summary(dataframe) #prints the summary of the data
+  r_square <- func_rsquare(dataframe) #prints the r-square values of numerical column
+  corr <- correlation(dataframe, threshold) #correlation
   
+  return (c(tab, summ, r_square, corr))
 }
 
 #Sample dataframe
@@ -16,8 +22,8 @@ func_table <- function(dataframe) {
   #A Function that takes a dataframe as a parameter and returns a list of :
   #frequency table categorical and logical variable
   #frequency table for every categorical and logical variable
-   t <- sapply(dataframe, is.factor)
-   return(lapply(dataframe[,t], table))
+   t <- c(dataframe[sapply(dataframe, is.factor)], dataframe[sapply(dataframe, is.logical)])
+   return(lapply(vec, table))
 }
 
 func_sum <- function(dataframe){
@@ -27,13 +33,19 @@ func_sum <- function(dataframe){
   t <- sapply(dataframe, is.numeric)
   return(lapply(dataframe[,t], summary))
 }
+
 func_rsquare <- function(dataframe){
   # b) A dataframe that contains each pair of column names in the first column and the associated
-  #r-square value in the second column. 
-  data.lm <- lm(formula,dataframe) #build a linear model where the formula will be enter and the specified data frame
-  return(lapply(dataframe[,sapply(dataframe, is.numeric)], summary(data.lm)$r.squared))
-  
+  #r-square value in the second column.
+  dataframe <- sapply(dataframe, is.numeric)
+  indx <- expand.grid(colnames(dataframe), colnames(dataframe), stringsAsFactors=FALSE)
+  res <- sapply(seq_len(nrow(indx)),function(i) {i1 <- indx[i,]
+  form <-as.formula(paste(i1[,1], i1[,2], sep="~"))
+  fit <- lm(formula=form, data= dataframe)
+  summary(fit)$r.squared})
+  return(res)
 }
+
 
 #Need to add take coefficients whose absolute value is greater than the correlation threshold
 correlation <- function(dataframe){
