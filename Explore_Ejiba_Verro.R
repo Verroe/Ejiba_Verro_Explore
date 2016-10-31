@@ -37,39 +37,52 @@ func_sum <- function(dataframe){
 func_rsquare <- function(dataframe){
   # b) A dataframe that contains each pair of column names in the first column and the associated
   #r-square value in the second column.
+  #
   dataframe <- sapply(dataframe, is.numeric)
-  indx <- expand.grid(colnames(dataframe), colnames(dataframe), stringsAsFactors=FALSE)
-  res <- sapply(seq_len(nrow(indx)),function(i) {i1 <- indx[i,]
-  form <-as.formula(paste(i1[,1], i1[,2], sep="~"))
-  fit <- lm(formula=form, data= dataframe)
-  summary(fit)$r.squared})
-  return(res)
+  #Create a data frame from all combinations of factor variable
+  #indx <- expand.grid(colnames(dataframe), colnames(dataframe), stringsAsFactors=FALSE) 
+  #new column vectors
+  pvars <- c()
+  rpairs <- c()
+  for (i in 1:(length(colnames(dataframe))-1)) {
+      fit <- lm(dataframe[,i]~dataframe[,i+1], data= dataframe) #Creates a linear model
+      rsfit <- summary(fit)$r.squared #get r-squared values
+      pvars <- c(pvars, paste(colnames(dataframe),colnames(dataframe),sep="-")) #Gets pair of column names
+      rpairs <- c(rpairs,rsfit) #vectorize the r-squared values
+  }
+  newdata <- data.frame(pvars,rpairs) #put both the column names and r-squares into dataframe
+  colnames(newdata) <- c("Variable Pairs", "R-squared") #rename column variables
+  return(newdata)
 }
 
 
-#Need to add take coefficients whose absolute value is greater than the correlation threshold
-correlation <- function(dataframe){
-    #c) A dataframe that contains each pair of columns in the first column and correlation coefficient (Pearson) for all coefficient
+correlation <- function(dataframe, threshold = 0){
+    #A dataframe that contains each pair of columns in the first column and correlation coefficient (Pearson) for all coefficient
     #threshold in the second column a function that calculates correlation coefficients
     #Parameters: A dataframe
     #Returns: A dataframe with pair of column names and its correlation using pearson method
     
-    #remove NA in the data
-    ndata <- na.omit(dataframe)
+    #remove missing values in the data
+    dataframe <- na.omit(dataframe)
+    #Get numerical variables
+    dataframe <- dataframe[sapply(dataframe, is.numeric)]
+    #Create combination of all factor variables
+    comb <- expand.grid(colnames(dataframe), colnames(dataframe), stringsAsFactors = FALSE)
+    #get the pairs separated by -
+    pairs <- paste(comb$Var1,comb$Var2, sep = "-")
     #Creates a correlation matrix
-    corr_mtx <- cor(ndata[sapply(ndata, is.numeric)], method = "pearson")
-    #Prepare to remove duplicates by ignoring the lower triangle part of the matrix
-    corr_mtx[lower.tri(corr_mtx, diag = TRUE)] = NA
-    #creates a dataframe of 3 column table 
-    corr_mtx <- as.data.frame(as.table(corr_mtx))
-    #Remove the duplicates 
-    corr_mtx <- na.omit(corr_mtx)
-    #Write the result as with each pair of the column name separated by "-"
-    #corr_mtx <- corr_mtx[paste(corr_mtx$Var1, corr_mtx$Var2, sep = "-"), ]
-    colnames(corr_mtx) <- c("Var1","Var2","Cor Coef")
-    row.names(corr_mtx) <- c(1:nrow(corr_mtx))
-    
-    return(corr_mtx)
+    corr_mtx <- cor(dataframe, method = "pearson")
+    #Just consider the lower triangle part of the matrix
+    corr <- c(which(lower.tri(corr_mtx)))
+    #creates a dataframe with pairs of variable names and their correlations 
+    ndata <- data.frame(pairs, corr) #Error on different number of rows
+    ndata <- subset(ndata, corr > threshold) #overwrites the new data with correlation that exceeds the threshold
+    colnames(ndata) <- c("Variables","Cor")
+
+    return(ndata)
 }
 
-#I am still working on number 3 
+plots <- function(df, plotswitch, bins = NULL){
+  df <- df[sapply(df, is.numeric)]
+  
+}
