@@ -2,6 +2,10 @@
 #Homework 7 Explore function
 #Group C
 
+#Download ggplot for the plot function
+install.packages("ggplot2")
+library("ggplot2")
+
 #Main function
 explore <- function(dataframe, plot_switch = 'O', threshold, bins = NULL) {
  
@@ -45,10 +49,12 @@ func_rsquare <- function(dataframe){
   pvars <- c()
   rpairs <- c()
   for (i in 1:(length(colnames(dataframe))-1)) {
-      fit <- lm(dataframe[,i]~dataframe[,i+1], data= dataframe) #Creates a linear model
+    for (j in (i+1):length(colnames(dataframe))) {
+      fit <- lm(dataframe[,i]~dataframe[,j]) #Creates a linear model
       rsfit <- summary(fit)$r.squared #get r-squared values
-      pvars <- c(pvars, paste(colnames(dataframe),colnames(dataframe),sep="-")) #Gets pair of column names
+      pvars <- c(pvars, paste(colnames(dataframe[i]),colnames(dataframe[j]),sep="-")) #Gets pair of column names
       rpairs <- c(rpairs,rsfit) #vectorize the r-squared values
+    }
   }
   newdata <- data.frame(pvars,rpairs) #put both the column names and r-squares into dataframe
   colnames(newdata) <- c("Variable Pairs", "R-squared") #rename column variables
@@ -82,7 +88,126 @@ correlation <- function(dataframe, threshold = 0){
     return(ndata)
 }
 
-plots <- function(df, plotswitch, bins = NULL){
+## Copied from group member Jack
+#Need to update with comment line
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  # this function draws multiple graphs in one page.
+  # reference: http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
+  plots <- c(list(...), plotlist)
+  #
+  numPlots = length(plots)
+  if (is.null(layout)) {
+    # 
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    # 
+    for (i in 1:numPlots) {
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      # 
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+plots <- function(df, plotswitch= 'off', bins = NULL){
+  
   df <- df[sapply(df, is.numeric)]
   
+  if(plotswitch == "on"){
+    if(!is.null(vector)){ # 
+      for(j in 1:length(bins)){ 
+        for(i in 1:ncol(num)){
+          mean <- mean(num[,i]) 
+          # 
+          p1 <- ggplot(num,aes(x=num[i]),color = "blue")+ 
+            geom_histogram(fill="blue",bins=bins[j])+
+            ggtitle(paste(colnames(num[i]),bins[j],sep=" bins="))+
+            xlab(colnames(num[i]))+
+            geom_vline(xintercept = mean,col="red") 
+          # 
+          # 
+          
+          p2 <- ggplot(num,aes(x=num[i],..density..))+
+            geom_histogram(fill="blue",bins=bins[j])+
+            ggtitle(paste(colnames(num[i]),bins[j],sep=" bins="))+
+            xlab(colnames(num[i]))+
+            geom_vline(xintercept = mean,col="red") 
+          #
+          
+          grid.newpage()
+          #
+          pushViewport(viewport(layout = grid.layout(2, 2, heights = unit(c(1, 8), "null"))))
+          title <- paste(colnames(num[i]),bins[j],sep=" bin=")
+          grid.text(title, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:2))
+          print(p1, vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
+          print(p2, vp = viewport(layout.pos.row = 2, layout.pos.col = 2))
+          # 
+          
+        }
+      }
+    }
+    else{ #
+      for(i in 1:ncol(num)){
+        mean <- mean(num[,i]) 
+        # 
+        p1 <- ggplot(num,aes(x=num[i]),color = "blue")+  
+          geom_histogram(fill="blue")+
+          ggtitle(paste(colnames(num[i]),"default bins",sep=" bins="))+
+          xlab(colnames(num[i]))+
+          geom_vline(xintercept = mean,col="red")
+        # 
+        
+        p2 <- ggplot(num,aes(x=num[i],..density..))+
+          geom_histogram(fill="blue")+
+          ggtitle(paste(colnames(num[i]),"default bins",sep=" bins="))+
+          xlab(colnames(num[i]))+
+          geom_vline(xintercept = mean,col="red")
+        # 
+        grid.newpage()
+        pushViewport(viewport(layout = grid.layout(2, 2, heights = unit(c(1, 8), "null"))))
+        title <- paste(colnames(num[i]),"default bins",sep=" bins=")
+        grid.text(title, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:2))
+        print(p1, vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
+        print(p2, vp = viewport(layout.pos.row = 2, layout.pos.col = 2))# 
+        
+      }
+      
+    }
+    
+  }
+  else{
+    if(plotswitch == "grid"){#  
+      for(j in 1:length(bins)){
+        grid.newpage()
+        his_count <-list()   
+        his_density <- list()  
+        #
+        for(i in 1:ncol(num)){
+          his_count[[i]] <- ggplot(num, aes_string(colnames(num[i])), color = "blue") + 
+            geom_histogram(fill="blue", bins = bins[j])+ 
+            labs(title= paste(bins[j], "bins")) 
+          #
+        }
+        multiplot(plotlist = his_count, cols = 2)  
+        #
+        for(i in 1:ncol(num)){
+          his_density[[i]] <- ggplot(num, aes_string(colnames(num[i])), color = "blue") + 
+            geom_histogram(aes(y= ..density..), fill="blue", bins = bins[j])+ 
+            labs(title= paste(bins[j], "bins")) 
+          #
+        }
+        multiplot(plotlist = his_density, cols = 2)  
+        #
+      }
+    }
+  }
 }
