@@ -7,14 +7,14 @@ install.packages("ggplot2")
 library("ggplot2")
 
 #Main function
-explore <- function(dataframe, plot_switch = 'O', threshold, bins = NULL) {
+explore <- function(dataframe, plot_switch = 'OFF', threshold, bins = NULL) {
  
   tab <- func_table(dataframe) #prints the frequency table of the dataframe
   summ <- func_summary(dataframe) #prints the summary of the data
   r_square <- func_rsquare(dataframe) #prints the r-square values of numerical column
   corr <- correlation(dataframe, threshold) #correlation
-  
-  return (c(tab, summ, r_square, corr))
+  plotsblue <- plots(dataframe, plot_switch, bins)
+  return (list(tab, summ, r_square, corr))
 }
 
 #Sample dataframe
@@ -89,15 +89,14 @@ correlation <- function(dataframe, threshold = 0){
 }
 
 ## Copied from group member Jack
-#Need to update with comment line
-multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   # this function draws multiple graphs in one page.
   # reference: http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
   plots <- c(list(...), plotlist)
-  #
+  #assigns the number of plots to numPlots from the vector plots above
   numPlots = length(plots)
   if (is.null(layout)) {
-    # 
+    #creates a divided figure to the number of rows and columns in the matrix
     layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
                      ncol = cols, nrow = ceiling(numPlots/cols))
   }
@@ -108,7 +107,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   } else {
     grid.newpage()
     pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
-    # 
+    #for more than one plots, print plots in different layout
     for (i in 1:numPlots) {
       matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
       # 
@@ -119,95 +118,102 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 }
 
 plots <- function(df, plotswitch= 'off', bins = NULL){
+        ##This function returns a plot of the histogram for numerical variables blue histograms with a 
+        #vertical red line at the mean (one using counts and the other density) for every numerical variable 
+        #At each number of bins integer specified in the bin vector parameter.
+        #Parameters:
+        #dataframe
+        #Plotswitch mode on, off, or grid
+        #Bins, the number of bin
   
-  df <- df[sapply(df, is.numeric)]
+  num <- df[sapply(df, is.numeric)]
   
   if(plotswitch == "on"){
-    if(!is.null(vector)){ # 
+    if(!is.null(vector)){ 
       for(j in 1:length(bins)){ 
         for(i in 1:ncol(num)){
           mean <- mean(num[,i]) 
-          # 
+          #Plots of the histogram with a vertical red line at the mean using counting 
+          #for numerical variables at each number of bins in the vector parameter 
           p1 <- ggplot(num,aes(x=num[i]),color = "blue")+ 
             geom_histogram(fill="blue",bins=bins[j])+
             ggtitle(paste(colnames(num[i]),bins[j],sep=" bins="))+
             xlab(colnames(num[i]))+
             geom_vline(xintercept = mean,col="red") 
-          # 
-          # 
           
+          #Plots of the histogram with a vertical red line at the mean using density
           p2 <- ggplot(num,aes(x=num[i],..density..))+
             geom_histogram(fill="blue",bins=bins[j])+
             ggtitle(paste(colnames(num[i]),bins[j],sep=" bins="))+
             xlab(colnames(num[i]))+
             geom_vline(xintercept = mean,col="red") 
-          #
-          
+          #creates a grip in a new page
           grid.newpage()
-          #
+          #position the 2 graphs in one page
           pushViewport(viewport(layout = grid.layout(2, 2, heights = unit(c(1, 8), "null"))))
           title <- paste(colnames(num[i]),bins[j],sep=" bin=")
           grid.text(title, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:2))
           print(p1, vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
           print(p2, vp = viewport(layout.pos.row = 2, layout.pos.col = 2))
-          # 
-          
         }
       }
     }
-    else{ #
+    #if the vector is null
+    else{ 
       for(i in 1:ncol(num)){
         mean <- mean(num[,i]) 
-        # 
+        # plots the graph of the histogram using counting
         p1 <- ggplot(num,aes(x=num[i]),color = "blue")+  
           geom_histogram(fill="blue")+
           ggtitle(paste(colnames(num[i]),"default bins",sep=" bins="))+
           xlab(colnames(num[i]))+
           geom_vline(xintercept = mean,col="red")
-        # 
+        # plots the graph of the histograph using density
         
         p2 <- ggplot(num,aes(x=num[i],..density..))+
           geom_histogram(fill="blue")+
           ggtitle(paste(colnames(num[i]),"default bins",sep=" bins="))+
           xlab(colnames(num[i]))+
           geom_vline(xintercept = mean,col="red")
-        # 
+        # on a new page print the two graphs together 
         grid.newpage()
         pushViewport(viewport(layout = grid.layout(2, 2, heights = unit(c(1, 8), "null"))))
         title <- paste(colnames(num[i]),"default bins",sep=" bins=")
         grid.text(title, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:2))
         print(p1, vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
-        print(p2, vp = viewport(layout.pos.row = 2, layout.pos.col = 2))# 
+        print(p2, vp = viewport(layout.pos.row = 2, layout.pos.col = 2)) 
         
       }
       
     }
     
   }
+  #To handle the case for where the plotswitch is on grid mode
   else{
-    if(plotswitch == "grid"){#  
+    if(plotswitch == "grid"){  
       for(j in 1:length(bins)){
         grid.newpage()
         his_count <-list()   
         his_density <- list()  
-        #
+        # plots the histogram using counting and adds it the list
         for(i in 1:ncol(num)){
           his_count[[i]] <- ggplot(num, aes_string(colnames(num[i])), color = "blue") + 
             geom_histogram(fill="blue", bins = bins[j])+ 
             labs(title= paste(bins[j], "bins")) 
-          #
         }
+        #create plots at the size of the histogram with counting
         multiplot(plotlist = his_count, cols = 2)  
-        #
+        #plots the histogram using density and update the list
         for(i in 1:ncol(num)){
           his_density[[i]] <- ggplot(num, aes_string(colnames(num[i])), color = "blue") + 
             geom_histogram(aes(y= ..density..), fill="blue", bins = bins[j])+ 
             labs(title= paste(bins[j], "bins")) 
-          #
         }
+        #create plots at the size of the histogram with density
         multiplot(plotlist = his_density, cols = 2)  
-        #
       }
     }
   }
 }
+
+explore(diamonds, plot_switch = 'ON', threshold = 0, bins = 2)
