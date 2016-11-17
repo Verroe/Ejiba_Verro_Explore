@@ -14,7 +14,7 @@ explore <- function(dataframe, plot_switch = 'OFF', threshold, bins = NULL) {
   r_square <- func_rsquare(dataframe) #prints the r-square values of numerical column
   corr <- correlation(dataframe, threshold) #correlation
   plotsblue <- plots(dataframe, plot_switch, bins)
-  return (list(tab, summ, r_square, corr))
+  return (list(tab, summ, r_square, corr, plotsblue))
 }
 
 #Sample dataframe
@@ -216,4 +216,5 @@ plots <- function(df, plotswitch= 'off', bins = NULL){
   }
 }
 
+##Need gray plots
 explore(diamonds, plot_switch = 'ON', threshold = 0, bins = 2)
