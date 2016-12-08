@@ -10,7 +10,7 @@ library("ggplot2")
 explore <- function(dataframe, plot_switch = 'OFF', threshold, bins = NULL) {
  
   tab <- func_table(dataframe) #prints the frequency table of the dataframe
-  summ <- func_summary(dataframe) #prints the summary of the data
+  summ <- func_sum(dataframe) #prints the summary of the data
   r_square <- func_rsquare(dataframe) #prints the r-square values of numerical column
   corr <- correlation(dataframe, threshold) #correlation
   plotsblue <- plots(dataframe, plot_switch, bins)
@@ -21,6 +21,7 @@ explore <- function(dataframe, plot_switch = 'OFF', threshold, bins = NULL) {
 install.packages("vcd")
 library("vcd")
 data(Arthritis)
+require(reshape2)
 
 func_table <- function(dataframe) {
   #A Function that takes a dataframe as a parameter and returns a list of :
@@ -43,13 +44,14 @@ func_rsquare <- function(dataframe){
   #r-square value in the second column.
   #
   dataframe <- sapply(dataframe, is.numeric)
+  dataframe<- na.omit(dataframe)
   #Create a data frame from all combinations of factor variable
   #indx <- expand.grid(colnames(dataframe), colnames(dataframe), stringsAsFactors=FALSE) 
   #new column vectors
-  pvars <- c()
-  rpairs <- c()
-  for (i in 1:(length(colnames(dataframe))-1)) {
-    for (j in (i+1):length(colnames(dataframe))) {
+  pvars <- cbind()
+  rpairs <- cbind()
+  for (i in 1:length(colnames(dataframe))) {
+    for (j in (i+1):length(colnames(dataframe))){
       fit <- lm(dataframe[,i]~dataframe[,j]) #Creates a linear model
       rsfit <- summary(fit)$r.squared #get r-squared values
       pvars <- c(pvars, paste(colnames(dataframe[i]),colnames(dataframe[j]),sep="-")) #Gets pair of column names
@@ -60,7 +62,6 @@ func_rsquare <- function(dataframe){
   colnames(newdata) <- c("Variable Pairs", "R-squared") #rename column variables
   return(newdata)
 }
-
 
 correlation <- function(dataframe, threshold = 0){
     #A dataframe that contains each pair of columns in the first column and correlation coefficient (Pearson) for all coefficient
@@ -73,6 +74,7 @@ correlation <- function(dataframe, threshold = 0){
     #Get numerical variables
     dataframe <- dataframe[sapply(dataframe, is.numeric)]
     #Create combination of all factor variables
+    if (ncol(dataframe) >=2 ){
     comb <- expand.grid(colnames(dataframe), colnames(dataframe), stringsAsFactors = FALSE)
     #get the pairs separated by -
     pairs <- paste(comb$Var1,comb$Var2, sep = "-")
@@ -86,6 +88,9 @@ correlation <- function(dataframe, threshold = 0){
     colnames(ndata) <- c("Variables","Cor")
 
     return(ndata)
+    }
+    else
+      print("Columns are less than 2")
 }
 
 ## Copied from group member Jack
@@ -214,7 +219,13 @@ plots <- function(df, plotswitch= 'off', bins = NULL){
       }
     }
   }
+  if(is.factor(df) && is.numeric(df) == FALSE) #for categoric and binary column plot a gray bar graph
+  {
+    for(i in 1:ncol(df)){
+      j <- df[,i] #extract every column of the dataframe
+      print(ggplot(df,aes(j))+stat_count())
+      }
+    }
 }
 
-##Need gray plots
 explore(diamonds, plot_switch = 'ON', threshold = 0, bins = 2)
