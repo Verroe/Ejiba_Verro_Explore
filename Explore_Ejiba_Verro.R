@@ -43,19 +43,23 @@ func_rsquare <- function(dataframe){
   # b) A dataframe that contains each pair of column names in the first column and the associated
   #r-square value in the second column.
   #
-  dataframe <- sapply(dataframe, is.numeric)
+  #dataframe <- sapply(dataframe, is.numeric)
   dataframe<- na.omit(dataframe)
   #Create a data frame from all combinations of factor variable
   #indx <- expand.grid(colnames(dataframe), colnames(dataframe), stringsAsFactors=FALSE) 
   #new column vectors
-  pvars <- cbind()
-  rpairs <- cbind()
+  pvars <- c()
+  rpairs <- c()
   for (i in 1:length(colnames(dataframe))) {
     for (j in (i+1):length(colnames(dataframe))){
-      fit <- lm(dataframe[,i]~dataframe[,j]) #Creates a linear model
-      rsfit <- summary(fit)$r.squared #get r-squared values
-      pvars <- c(pvars, paste(colnames(dataframe[i]),colnames(dataframe[j]),sep="-")) #Gets pair of column names
-      rpairs <- c(rpairs,rsfit) #vectorize the r-squared values
+      if (is.numeric(dataframe[,i]) == TRUE){
+        if (is.numeric(dataframe[,j]) ==TRUE){
+          fit <- lm(dataframe[,i]~dataframe[,j]) #Creates a linear model
+          rsfit <- summary(fit)$r.squared #get r-squared values
+          pvars <- c(pvars, paste(colnames(dataframe[i]),colnames(dataframe[j]),sep="-")) #Gets pair of column names
+          rpairs <- c(rpairs,rsfit) #vectorize the r-squared values
+        }
+      }
     }
   }
   newdata <- data.frame(pvars,rpairs) #put both the column names and r-squares into dataframe
@@ -75,19 +79,19 @@ correlation <- function(dataframe, threshold = 0){
     dataframe <- dataframe[sapply(dataframe, is.numeric)]
     #Create combination of all factor variables
     if (ncol(dataframe) >=2 ){
-    comb <- expand.grid(colnames(dataframe), colnames(dataframe), stringsAsFactors = FALSE)
-    #get the pairs separated by -
-    pairs <- paste(comb$Var1,comb$Var2, sep = "-")
-    #Creates a correlation matrix
-    corr_mtx <- cor(dataframe, method = "pearson")
-    #Just consider the lower triangle part of the matrix
-    corr <- c(which(lower.tri(corr_mtx)))
-    #creates a dataframe with pairs of variable names and their correlations 
-    ndata <- data.frame(pairs, corr) #Error on different number of rows
-    ndata <- subset(ndata, corr > threshold) #overwrites the new data with correlation that exceeds the threshold
-    colnames(ndata) <- c("Variables","Cor")
-
-    return(ndata)
+      comb <- expand.grid(colnames(dataframe), colnames(dataframe), stringsAsFactors = FALSE)
+      #get the pairs separated by -
+      pairs <- paste(comb$Var1,comb$Var2, sep = "-")
+      #Creates a correlation matrix
+      corr_mtx <- cor(dataframe, method = "pearson")
+      #Just consider the lower triangle part of the matrix
+      corr <- c(which(lower.tri(corr_mtx)))
+      #creates a dataframe with pairs of variable names and their correlations 
+      ndata <- data.frame(pairs, corr) #Error on different number of rows
+      ndata <- subset(ndata, corr > threshold) #overwrites the new data with correlation that exceeds the threshold
+      colnames(ndata) <- c("Variables","Cor")
+  
+      return(ndata)
     }
     else
       print("Columns are less than 2")
@@ -219,13 +223,14 @@ plots <- function(df, plotswitch= 'off', bins = NULL){
       }
     }
   }
-  if(is.factor(df) && is.numeric(df) == FALSE) #for categoric and binary column plot a gray bar graph
-  {
-    for(i in 1:ncol(df)){
-      j <- df[,i] #extract every column of the dataframe
-      print(ggplot(df,aes(j))+stat_count())
+  if(is.factor(df) == TRUE){
+     if (is.numeric(df) == FALSE){ #for categoric and binary column plot a gray bar graph
+        for(i in 1:ncol(df)){
+          j <- df[,i] #extract every column of the dataframe
+          print(ggplot(df,aes(j))+stat_count())
       }
-    }
+     }
+  }
 }
 
-explore(diamonds, plot_switch = 'ON', threshold = 0, bins = 2)
+explore(Arthritis, plot_switch = 'ON', threshold = 0, bins = 2)
